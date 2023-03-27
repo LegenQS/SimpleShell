@@ -95,13 +95,6 @@ out:
 	return 0;
 }
 
-/*
- * Attempts to kick off the command specified by line as a child process. The
- * child process will accept input from the i/o resource specified by
- * read_end_fd and write output to the i/o resource specified by write_end_fd.
- * If read_end_fd == -1, the child process will read from stdin. If
- * write_end_fd == -1, the child process will write to stdout.
- */
 int execute_handler(char *line)
 {
 	char *argv[_POSIX_ARG_MAX];
@@ -131,10 +124,6 @@ error:
 	return -1;
 }
 
-/*
- * Tokenizes the line into a series of commands that form a pipeline. Runs the
- * commands in the pipeline, chaining them together with pipes.
- */
 static void process_line(char *line)
 {
 	int exit_status = 0, len = strlen(line);
@@ -148,23 +137,13 @@ static void process_line(char *line)
 
 	if (check_syntax(line_dup, &cmd) == -1)
 		goto clean;
-	/*
-	 * This loop executes each command in the pipeline, linking it to the
-	 * next command with a pipe.
-	 */
+
 	cur_cmd = line_dup;
 
 	if (cmd != NULL) {
 		int argc = tokenize(cur_cmd, argv, DELIMETER,
 				_POSIX_ARG_MAX);
 
-		/*
-		 * Use function pointer to execute the handler
-		 * implementation for each built-in command.
-		 *
-		 * You will see a similar pattern often in the
-		 * Linux kernel. =]
-		 */
 		if (cmd->cmd_handler(argc, argv))
 			goto clean;
 
@@ -174,7 +153,6 @@ static void process_line(char *line)
 	}
 
 clean:
-	/* Wait for all of the children to exit. */
 	while (1) {
 		if (wait(&exit_status) == -1) {
 			/*
@@ -194,9 +172,6 @@ static inline void print_prompt(void)
 	fflush(stderr);
 }
 
-/*
- * Release all resources upon detecting SIGINT (control-c).
- */
 static void control_c_handler(int unused)
 {
 	release();
